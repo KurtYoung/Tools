@@ -6,16 +6,23 @@
 ;; customize color-theme and font
 ;; need ~/.eamcs.d/color-theme.el 
 ;; also need export TERM=xterm-256color if start emacs with -nw
-(require 'color-theme)
-(color-theme-billw)
-(set-default-font "monospace-10")
+;; (require 'color-theme)
+;; (color-theme-billw)
+;; (set-default-font "monospace-10")
 
 ;; add php-mode
 ;; need ~/.emacs.d/php-mode.el
 (require 'php-mode)
 (add-hook 'php-mode-user-hook 'turn-on-font-lock)
 
-(global-set-key [f9]  'my-compile)
+(global-set-key [f9] '(lambda()
+    (interactive)
+    (save-some-buffers t)
+    (myCompileCmd)
+    (compile compile-cmd)
+    (shrink-compile-window)
+    )
+)
 (global-set-key [f11] 'my-fullscreen)
 (global-set-key "\C-j" 'newline)
 (global-set-key "\C-m" 'newline-and-indent)
@@ -44,17 +51,25 @@
 ;; share clipboard with outside programs
 (setq x-select-enable-clipboard t)
 
+;; open compile window with horizon style
+(setq split-height-threshold 0)
+(setq split-width-threshold nil)
+
+(setq c-basic-offset 4)
 (setq read-file-name-completion-ignore-case t)
 (setq read-buffer-completion-ignore-case t)
+(setq-default indent-tabs-mode nil)
+(setq-default tab-width 4)
+
 
 ;; c/c++ related, toggle hungry delete
 ;; a single <DEL> deletes all preceding whitespace, not just one space
 (add-hook 'c++-mode-hook
-      '(lambda ( )
-         (c-toggle-hungry-state)))
+          '(lambda ( )
+             (c-toggle-hungry-state)))
 (add-hook 'c-mode-hook
-      '(lambda ( )
-         (c-toggle-hungry-state)))
+          '(lambda ( )
+             (c-toggle-hungry-state)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; highlight space characters at tail
@@ -63,7 +78,7 @@
  '(my-tab-face            ((((class color)) (:background "grey10"))) t)
  '(my-trailing-space-face ((((class color)) (:background "gray10"))) t)
  '(my-long-line-face      ((((class color)) (:background "tomato"))) t)
-)
+ )
 
 ;; define assist function which highlight long lines(>80)
 (defun cc-mode-add-keywords (mode)
@@ -100,12 +115,25 @@
    '(2 "_NET_WM_STATE_FULLSCREEN" 0))
   )
 
-(setq compile-cmd "scons -U -j10")
-(defun my-compile()
-  "Save buffers and start compile"
+(defun myCompileCmd()
   (interactive)
-  (save-some-buffers t)
-  ;;(switch-to-buffer-other-window "*compilation*")
-  (setq compilation-scroll-output "abc")
-  (compile compile-cmd)
-)
+  (setq compile_file_name (
+      substring (buffer-name (current-buffer))
+                0
+                (string-match "[.]" (buffer-name (current-buffer)))))
+  (setq compile-cmd (
+      concat "g++ -g -DDEBUG "
+             (buffer-name (current-buffer))
+             " && ./a.out"))
+  )
+
+(defun shrink-compile-window()
+  "shrink compile window, avoid compile window occupy 1/2 hight of whole window"
+  (interactive)
+  ;;(select-window (get-buffer-window "*compilation*"))
+  (setq compiled_buffer_name (buffer-name (current-buffer)))
+  (switch-to-buffer-other-window "*compilation*")
+  (if (< (/ (frame-height) 3) (window-height))
+      (shrink-window (/ (window-height) 2)))
+  (switch-to-buffer-other-window compiled_buffer_name)
+  )
