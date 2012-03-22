@@ -13,7 +13,6 @@
 using namespace std;
 
 #define FOR(i, n) for (int i = 0; i < (n); ++i)
-#define FOR(i, b, n) for (int i = (b); i < (n); ++i)
 
 template<class T> void output(T _array, int _n) {
     FOR(_i, _n) cout << _array[_i] << " "; cout << endl;
